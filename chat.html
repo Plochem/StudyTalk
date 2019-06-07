@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <title>StudyTalk</title>
+
+<style type="text/css">
+body {
+	text-align:center;
+}
+#wrapper{
+	padding-bottom:25px;
+	background:#007FFF;
+	width:80%;
+	border:1px solid #000;
+	height: 600px;
+	float: right;
+}
+
+#DonateBox{
+  	background: #007FFF;
+  	width:7%;
+  	border: 1px solid #000;
+  	height: auto;
+  	float: left;
+}
+
+#listofusers{
+	background: #3BDA92;
+	width:12%;
+	border: 1px solid #000;
+	height: auto;
+	float: left;
+}
+
+#chatbox {
+	text-align:left;
+	margin:auto;
+	margin-bottom:25px;
+	padding:10px;
+	background:#fff;
+	height:500px;
+	width:1000px;
+	border:1px;
+	overflow:auto;
+}
+.name{
+	text-decoration-color: #28DE85;
+}
+#usermsg, #namemsg {
+	width:400px;
+	border:1px solid #ACD8F0;
+}
+#submit { width: 60px; }
+#menu { padding:12.5px 25px 12.5px 25px; }
+#welcome { float:left; }
+#logout { float:right; }
+.black {
+ color: black;
+}
+.red {
+ color: red;
+}
+.blue {
+ color: blue;
+}
+.green{
+ color: green;
+}
+.purple{
+ color: purple;
+}
+.Azur{
+  color: #007FFF;
+}
+</style>
+</head>
+<body>
+
+<div id="wrapper">
+	<div id="menu">
+		<p id="welcome"> There are currently o users connected!</p>
+  		<p id="logout">Welcome</p>
+ 	</div>
+ 	<div id="chatbox">
+ 	</div>
+ 	<form name="message" id="message" method="">
+  		<input name="messagebox" type="text" id="usermsg"/>
+  		<select id="color">
+   		<option value="black">Select a text color</option>
+     		<option value="black">Black</option>
+     		<option value="red">Red</option>
+     		<option value="blue">Blue</option>
+     		<option value="green">Green</option>
+     		<option value="purple">Purple</option>
+     		<option value="Azur">Azur</option>
+  		</select>
+  		<!-- <input type="file" onchange="previewFile()"><br> -->
+  		<input name="submitmsg" type="button" id="submitmsg" value="Send"/>
+ 	</form>
+</div>
+<div id="listofusers">
+ 	<p>Online Users</p>
+</div>
+<div id="DonateBox">
+	<button type="button" id="donateBtn">Donate</button>
+	<p>Leaderboard</p>
+	<div id="lb">
+
+	</div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+	var socket = io(); // creates new socket (client)
+</script>
+<script src="http://code.jquery.com/jquery-3.2.1.js"></script>
+
+<script>
+    $(function () {
+    	let username;
+
+    	$("#donateBtn").click(function(){
+    		socket.emit('donateHandler', 1);
+    	});
+
+      	$("#submitmsg").click(function(){
+         	sendMessage();
+        	return false;
+      	});
+
+     	$(document).on('keyup keypress', 'form input', function(e) {
+      		if(e.which === 13) {// when press enter key
+        		e.preventDefault(); // prevents submitting
+     			sendMessage();
+        		return false;
+      		}
+   		});
+   // function previewFile(){
+   //        var preview = document.querySelector('img'); //selects the query named img
+   //        var file    = document.querySelector('input[type=file]').files[0]; //sames as here
+   //        var reader  = new FileReader();
+   //        reader.onloadend = function () {
+   //            preview.src = reader.result;
+   //        }
+   //        if (file) {
+   //            reader.readAsDataURL(file); //reads the data as a URL
+   //        } else {
+   //            preview.src = "";
+   //        }
+   //   }
+
+   		function sendMessage(){ // send message to server
+    		if($("#usermsg").val() !== ""){
+     			let msg = $("#usermsg").val();
+     			if(msg.indexOf("<3") !== -1) {
+      				msg = msg.replace(/<3/g, "♥")
+     			}
+			    if(msg.indexOf(":tableflip:") !== -1){
+			      	msg = msg.replace(/:tableflip:/g,"(╯°□°）╯︵ ┻━┻");
+			    }
+			    if(msg.indexOf(":shrug:") !== -1){
+			      	msg = msg.replace(/:shrug:/g, "¯"+"\\"+"_(ツ)_/¯");
+			    }
+		     	if(msg.indexOf(":flipallthemtables:") !== -1){
+		      		msg = msg.replace(/:flipallthemtables:/g, "┻━┻︵ \\(°□°)/ ︵ ┻━┻");
+		     	}
+		     	if(msg.indexOf(":smooth:") !== -1){
+		      		msg = msg.replace(/:smooth:/g,"(づ ￣ ³￣)づ ⓈⓂⓄⓄⓉⒽ");
+		     	}
+     			if(msg === "/clear"){
+      				socket.emit('chat', "/clear"); // sends /clear to server
+      				$("#usermsg").val("");
+      				return;
+     			}
+     			socket.emit('chat', msg, $("#color").val()); // client sends message and color to server
+     			$("#usermsg").val(""); // clears the textbox
+     			$("#chatbox").scrollTop($("#chatbox")[0].scrollHeight); //auto scroll
+    		}
+   		}
+
+   		socket.on('chat', function(msg){ //when client receives a msg
+    		if(msg === "/clear"){ //if client receives /clear
+     			$("#chatbox").html(''); //clear the chatbox
+     			return;
+    		}
+         	$("#chatbox").append(msg);
+         	$("#chatbox").scrollTop($("#chatbox")[0].scrollHeight); //auto scroll
+      	});
+
+      	socket.on('clientDisplay', function(title){ // when client receives the updated number of connected clients
+       		$("p#welcome").html(title);
+      	});
+
+      	socket.on('redirect', function(destination) { //redirects client to nickname area
+       		window.location.href = destination;
+   		});
+
+   		socket.on('topright', function(toprightmsg){
+    		$("p#logout").html(toprightmsg); // the welcome *username*
+   		});
+
+   		socket.on('clearlist', function(filler){
+    		$("div#listofusers").html(''); //clears list to prevent double listing
+    		$("div#listofusers").append("<p>USER-LIST</p>");
+   		});
+
+   		socket.on('onlineuser', function(username){
+    		$("div#listofusers").append("<p>" + username + "</p>"); //appends all nicknames from array
+   		});
+
+   		socket.on('donateHandler', function(val){ // when recieve the nickname and clicks
+   			$("#lb").append(val);
+   		});
+
+   		socket.on('clearDonate', function(filler){
+   			$("#lb").html('');
+   		});
+  	});
+</script>
+</body>
+</html>
+
