@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <title>StudyTalk</title>
+</head>
+<body>
+	<p>Enter your nickname:</p>
+ 	<form>
+  		<input type="text" name="nickname" id="nickname"/>
+  		<input name="submitnickname" type="button" id="submitnickname" value="Send"/>
+ 	</form>
+ 	<script src="/socket.io/socket.io.js"></script>
+  	<script>
+    	var socket = io(); // creates new socket (client)
+  	</script>
+ 	<script src="http://code.jquery.com/jquery-3.2.1.js"></script>
+  	<script>
+   		$("#submitnickname").click(function(){
+    		setNick();
+         	return false;
+      	});
+
+      	$(document).on('keyup keypress', 'form input', function(e) {
+      		if(e.which === 13) {// when press enter key
+        		e.preventDefault(); // prevents the url changing thing
+     			setNick();
+        		return false;
+      		}
+   		});
+
+   		function setNick(){
+    		if($("#nickname").val() !== ""){
+     			let username = $("#nickname").val();
+         		window.location.href = '/chat'; // sends user to chatroom
+          		socket.emit('nickname', username); // sends nickname to server
+    		} else {
+     			alert("Enter a valid name!");
+    		}
+   		}
+  	</script>
+</body>
+</html>
